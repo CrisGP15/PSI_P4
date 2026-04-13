@@ -1,0 +1,9 @@
+[run]
+omit =
+    manage.py
+    song_models/tests_models.py
+
+[report]
+exclude_lines =
+    if __name__ == "__main__"
+    if settings.DEBUG
