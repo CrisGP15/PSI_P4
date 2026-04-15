@@ -8,7 +8,7 @@
         :class="{ 'current-line': line.isCurrent }"
         class="lyric-line"
       >
-        <!-- Precesar cada línea reemplazando {palabra} con inputs -->
+        <!-- Precesar cada lí"nea reemplazando {palabra} con inputs -->
         <span v-html="processLine(line.text)"></span>
       </div>
     </div>
@@ -110,7 +110,7 @@ function updateVisibleLines() {
 
 function processLine(lineText) {
   // Reemplazar {palabra} con inputs
-  // Esto es complejo y lo harás después
+ 
   return lineText.replace(/\{([^}]+)\}/g, '<input type="text" placeholder="___" />')
 }
 </script>
