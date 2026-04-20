@@ -8,7 +8,7 @@
         :class="{ 'current-line': line.isCurrent }"
         class="lyric-line"
       >
-        <!-- Precesar cada lí"nea reemplazando {palabra} con inputs -->
+        <!-- Procesar cada línea reemplazando {palabra} con inputs -->
         <span v-html="processLine(line.text)"></span>
       </div>
     </div>

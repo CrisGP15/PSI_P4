@@ -1,10 +1,10 @@
 <template>
   <div class="audio-player">
     <audio 
-      ref="audioElement"
-      :src="audioUrl"
-      @timeupdate="onTimeUpdate"
-      @ended="onEnded"
+      ref="audio"
+      :src="audioSrc"
+      @timeupdate="emitTimeUpdate"
+      @ended="emitEnded"
       controls
     ></audio>
   </div>
@@ -12,6 +12,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+const audio = ref(null)
 
 const props = defineProps({
   audioUrl: {
@@ -27,12 +28,12 @@ const props = defineProps({
 const emit = defineEmits(['timeUpdate', 'ended'])
 const audioElement = ref(null)
 
-function onTimeUpdate(event) {
-  emit('timeUpdate', event.target.currentTime)
+function emitTimeUpdate() {
+  emit('onTimeUpdate', event.target.currentTime)
 }
 
-function onEnded() {
-  emit('ended')
+function emitEnded() {
+  emit('onEnded')
 }
 
 // Observar si se debe parar el audio
