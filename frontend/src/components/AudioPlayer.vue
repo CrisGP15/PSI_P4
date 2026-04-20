@@ -1,8 +1,8 @@
 <template>
   <div class="audio-player">
-    <audio 
+    <audio
       ref="audio"
-      :src="audioSrc"
+      :src="audioUrl"
       @timeupdate="emitTimeUpdate"
       @ended="emitEnded"
       controls
@@ -12,7 +12,6 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-const audio = ref(null)
 
 const props = defineProps({
   audioUrl: {
@@ -25,10 +24,13 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['timeUpdate', 'ended'])
-const audioElement = ref(null)
+const emit = defineEmits(['onTimeUpdate', 'onEnded'])
 
-function emitTimeUpdate() {
+
+const audio = ref(null)
+
+
+function emitTimeUpdate(event) {
   emit('onTimeUpdate', event.target.currentTime)
 }
 
@@ -36,12 +38,13 @@ function emitEnded() {
   emit('onEnded')
 }
 
-// Observar si se debe parar el audio
+
 watch(() => props.stopAudio, (shouldStop) => {
-  if (shouldStop && audioElement.value) {
-    audioElement.value.pause()
-  } else if (!shouldStop && audioElement.value) {
-    audioElement.value.play()
+  if (!audio.value) return
+  if (shouldStop) {
+    audio.value.pause()
+  } else {
+    audio.value.play()
   }
 })
 </script>
