@@ -41,8 +41,7 @@ async function handleLogin() {
   const success = await authStore.login(username.value, password.value)
   
   if (success) {
-    // Redirigir a /
-    //router.push('/')
+    router.push('/')
   } else {
     errorMessage.value = 'Invalid username or password'
   }
