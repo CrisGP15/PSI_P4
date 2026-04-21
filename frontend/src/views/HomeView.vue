@@ -4,6 +4,10 @@
     <!-- Descripción de la aplicación -->
     <section class="hero">
       <h1>SongProject</h1>
+      <h2>Learn a language through songs</h2>
+      <p class="description">
+        "Songs" is the new way to learn English and other languages through music and the lyrics of your favourite songs. Improve and practise your listening skills with the best music videos. Fill in the gaps to the lyrics as you listen and sing Karaoke to your favourites
+      </p>
     </section>
 
     <!-- Botón canción aleatoria -->
@@ -183,6 +187,27 @@ onMounted(() => {
   color: #555;
   margin: 0;
 }
+
+.hero {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.hero h2 {
+  font-size: 2.5rem;
+  margin: 0 0 1rem 0;
+  color: #42b983;
+}
+
+.hero .description {
+  color: #555;
+  line-height: 1.6;
+  font-size: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+
 
 /* Botón random */
 .random-section {
