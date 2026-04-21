@@ -1,9 +1,312 @@
-<script setup>
-import TheWelcome from '../components/TheWelcome.vue'
-</script>
-
 <template>
-  <main>
-    <TheWelcome />
+  <main class="home">
+
+    <!-- Descripción de la aplicación -->
+    <section class="hero">
+      <h1>SongProject</h1>
+    </section>
+
+    <!-- Botón canción aleatoria -->
+    <section class="random-section">
+      <button
+        class="btn-random"
+        @click="goToRandomSong"
+        :disabled="loadingRandom"
+      >
+        {{ loadingRandom ? 'Cargando...' : 'random song' }}
+      </button>
+      <p v-if="randomError" class="error">{{ randomError }}</p>
+    </section>
+
+    <!-- Buscador -->
+    <section class="search-section">
+      <h2>Buscar canción</h2>
+      <form @submit.prevent="searchSongs">
+        <div class="search-bar">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Escribe el título de una canción..."
+            aria-label="Buscar canciones"
+          />
+          <button type="submit" :disabled="loadingSearch">
+            {{ loadingSearch ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- Resultados de búsqueda -->
+      <div v-if="searchResults.length > 0" class="song-list">
+        <h3>Resultados</h3>
+        <ul>
+          <li v-for="song in searchResults" :key="song.id">
+            <RouterLink :to="`/songs/${song.id}`">
+              {{ song.title }} — {{ song.artist }}
+            </RouterLink>
+          </li>
+        </ul>
+      </div>
+      <p v-else-if="searchDone && !loadingSearch" class="no-results">
+        No se encontraron canciones para "{{ searchQuery }}"
+      </p>
+      <p v-if="searchError" class="error">{{ searchError }}</p>
+    </section>
+
+    <!-- Top 3 canciones más populares -->
+    <section class="top-songs">
+      <h2>Canciones más populares</h2>
+
+      <div v-if="loadingTop" class="loading">Cargando canciones...</div>
+      <p v-else-if="topError" class="error">{{ topError }}</p>
+
+      <ul v-else-if="topSongs.length > 0" >
+        <li v-for="(song, index) in topSongs" :key="song.id" class="top-song-item">
+          <span class="rank">{{ index + 1 }}</span>
+          <RouterLink :to="`/songs/${song.id}`">
+            <span class="song-title">{{ song.title }}</span>
+            <span class="song-artist">{{ song.artist }}</span>
+          </RouterLink>
+          <span class="plays">{{ song.number_times_played }} plays</span>
+        </li>
+      </ul>
+
+      <p v-else class="no-results">No hay canciones disponibles.</p>
+    </section>
+
   </main>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// URL base de la API — se define en el archivo .env
+const API_URL = import.meta.env.VITE_API_URL
+
+// ── Estado: Top 3 canciones 
+const loadingTop  = ref(false)
+const topError    = ref(null)
+
+async function fetchTopSongs() {
+  loadingTop.value = true
+  topError.value   = null
+  try {
+    const res = await fetch(
+      `${API_URL}/api/songs/?ordering=-number_times_played&limit=3`
+    )
+    if (!res.ok) throw new Error(`Error ${res.status}`)
+    const data = await res.json()
+    // La API de Django REST Framework devuelve { results: [...] } cuando hay paginación
+    topSongs.value = data.results ?? data
+  } catch (err) {
+    topError.value = 'No se pudieron cargar las canciones populares.'
+    console.error(err)
+  } finally {
+    loadingTop.value = false
+  }
+}
+
+// ── Estado: Buscador 
+const searchResults = ref([])
+const loadingSearch = ref(false)
+const searchError   = ref(null)
+const searchDone    = ref(false)
+
+async function searchSongs() {
+  if (!searchQuery.value.trim()) return
+
+  loadingSearch.value = true
+  searchError.value   = null
+  searchDone.value    = false
+  searchResults.value = []
+
+  try {
+    const res = await fetch(
+      `${API_URL}/api/songs/?search=${encodeURIComponent(searchQuery.value)}`
+    )
+    if (!res.ok) throw new Error(`Error ${res.status}`)
+    const data = await res.json()
+    searchResults.value = data.results ?? data
+    searchDone.value    = true
+  } catch (err) {
+    searchError.value = 'Error al buscar canciones. Inténtalo de nuevo.'
+    console.error(err)
+  } finally {
+    loadingSearch.value = false
+  }
+}
+
+// ── Estado: Canción aleatoria 
+const loadingRandom = ref(false)
+const randomError   = ref(null)
+
+async function goToRandomSong() {
+  loadingRandom.value = true
+  randomError.value   = null
+  try {
+    const res = await fetch(`${API_URL}/api/songs/random/`)
+    if (!res.ok) throw new Error(`Error ${res.status}`)
+    const song = await res.json()
+    router.push(`/songs/${song.id}`)
+  } catch (err) {
+    randomError.value = 'No se pudo obtener una canción aleatoria.'
+    console.error(err)
+  } finally {
+    loadingRandom.value = false
+  }
+}
+
+// ── Carga inicial 
+onMounted(() => {
+  fetchTopSongs()
+})
+</script>
+
+<style scoped>
+.home {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Hero */
+.hero h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
+}
+.hero p {
+  color: #555;
+  margin: 0;
+}
+
+/* Botón random */
+.random-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.btn-random {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-random:hover:not(:disabled) {
+  background: #333;
+}
+.btn-random:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Buscador */
+.search-section h2,
+.top-songs h2 {
+  font-size: 1.2rem;
+  margin: 0 0 1rem;
+}
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+}
+.search-bar input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+.search-bar button {
+  padding: 0.5rem 1rem;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.search-bar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Listas de canciones */
+.song-list h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.5rem;
+  color: #444;
+}
+.song-list ul,
+.top-songs ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.song-list li a,
+.top-songs a {
+  color: #1a1a1a;
+  text-decoration: none;
+  font-weight: 500;
+}
+.song-list li a:hover,
+.top-songs a:hover {
+  text-decoration: underline;
+}
+
+/* Top songs */
+.top-song-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+.rank {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #bbb;
+  min-width: 1.5rem;
+  text-align: center;
+}
+.top-song-item a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.song-title {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.song-artist {
+  font-size: 0.8rem;
+  color: #777;
+}
+.plays {
+  font-size: 0.8rem;
+  color: #999;
+  white-space: nowrap;
+}
+
+/* Mensajes */
+.loading   { color: #888; font-size: 0.9rem; }
+.no-results { color: #888; font-size: 0.9rem; }
+.error     { color: #c0392b; font-size: 0.9rem; }
+</style>
