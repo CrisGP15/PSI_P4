@@ -12,8 +12,8 @@
           ref="audioPlayerRef"
           :audio-url="song.audio_url"
           :stop-audio="stopAudioFlag"
-          @time-update="handleTimeUpdate"
-          @ended="handleSongEnded"
+          @on-time-update="handleTimeUpdate"
+          @on-ended="handleSongEnded"
         />
       </div>
 
@@ -83,7 +83,7 @@ const summary = ref({ correct: 0, wrong: 0 })
 const songUserSent = ref(false)
 
 // URL de la API 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'   //-----si da error, a ver si añadir una / al final se soluciona
 
 // Estilo de fondo (si hay imagen)
 const backgroundStyle = computed(() => {
@@ -137,7 +137,7 @@ async function loadSong() {
   }
   
   try {
-    const response = await fetch(`${API_URL}/songs/${songId}/`)
+    const response = await fetch(`${API_URL}/api/v1/songs/${songId}/`)
     
     if (!response.ok) {
       throw new Error(`Error ${response.status}: No se pudo cargar la canción`)
@@ -167,7 +167,7 @@ async function loadSong() {
 // Cargar canción aleatoria
 async function loadRandomSong() {
   try {
-    const response = await fetch(`${API_URL}/songs/random/`)
+    const response = await fetch(`${API_URL}/api/v1/songs/random/`)
     
     if (!response.ok) {
       throw new Error('No se pudo cargar canción aleatoria')
@@ -241,16 +241,18 @@ async function saveSongUserResults() {
   if (songUserSent.value) return
   
   try {
-    const response = await fetch(`${API_URL}/songuser/`, {
+    const response = await fetch(`${API_URL}/api/v1/songuser/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authStore.token}`
+        // 'Authorization': `Bearer ${authStore.token}`
+        'Authorization': `Token ${authStore.token}`
+
       },
       body: JSON.stringify({
         song: song.value.id,
-        correct_words: summary.value.correct,
-        wrong_words: summary.value.wrong,
+        correct_words: summary.value.correct, //nombre correcto
+        wrong_words: summary.value.wrong, // nombre correcto
         percentage: percentage.value
       })
     })
