@@ -172,9 +172,10 @@ onMounted(() => {
 
 <style scoped>
 .home {
-  max-width: 720px;
+  max-width: none !important;
+  width: 100% !important;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
@@ -205,7 +206,7 @@ onMounted(() => {
   color: #555;
   line-height: 1.6;
   font-size: 1rem;
-  max-width: 600px;
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -245,6 +246,8 @@ onMounted(() => {
 .search-bar {
   display: flex;
   gap: 0.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 .search-bar input {
   flex: 1;

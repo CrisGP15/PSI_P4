@@ -73,10 +73,10 @@ const authStore = useAuthStore()
 
 .app-content {
   flex: 1;
-  max-width: 1200px;
-  width: 100%;
+  max-width: none !important;
+  width: 100% !important;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2rem;
 }
 
 @media (max-width: 768px) {
