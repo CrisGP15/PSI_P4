@@ -26,12 +26,12 @@ const router = createRouter({
       // Si ya está logueado, redirigir a home
       beforeEnter: (to, from, next) => {
         const authStore = useAuthStore()
-        if (authStore.isLoggedIn) {
+        if (authStore.isAuthenticated) {  // no se usa isLoggedIn
           next({ name: 'home' })
         } else {
           next()
         }
-    },
+      }
     },
      {
       path: '/log-out',
