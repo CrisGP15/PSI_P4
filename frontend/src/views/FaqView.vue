@@ -36,6 +36,7 @@
 
 <style scoped>
 .faq {
+  color: #333;
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;

@@ -50,6 +50,7 @@ async function handleLogin() {
 
 <style scoped>
 .login {
+  color: #333;
   max-width: 400px;
   margin: 50px auto;
   padding: 20px;
