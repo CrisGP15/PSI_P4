@@ -2,7 +2,7 @@
   <div class="audio-player">
     <audio
       ref="audio"
-      :src="audioUrl"
+      :src="audioSrc"
       @timeupdate="emitTimeUpdate"
       @ended="emitEnded"
       controls
@@ -14,7 +14,7 @@
 import { ref, watch } from 'vue'
 
 const props = defineProps({
-  audioUrl: {
+  audioSrc: {
     type: String,
     required: true
   },
@@ -30,8 +30,8 @@ const emit = defineEmits(['onTimeUpdate', 'onEnded'])
 const audio = ref(null)
 
 
-function emitTimeUpdate(event) {
-  emit('onTimeUpdate', event.target.currentTime)
+function emitTimeUpdate() {
+  emit('onTimeUpdate', audio.value.currentTime)
 }
 
 function emitEnded() {
