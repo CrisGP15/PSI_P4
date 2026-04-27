@@ -1,8 +1,8 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import { useAuthStore } from './stores/auth'
+import { RouterLink, RouterView } from "vue-router";
+import { useAuthStore } from "./stores/auth";
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 </script>
 
 <template>
@@ -11,10 +11,17 @@ const authStore = useAuthStore()
       <div class="header-content">
         <h1>🎵 SongProject</h1>
         <nav class="navbar">
-          <RouterLink to="/">Home</RouterLink>
+          <RouterLink to="/" data-cy="home-cypress-test">Home</RouterLink>
           <RouterLink to="/faq">FAQ</RouterLink>
-          <RouterLink v-if="!authStore.isAuthenticated" to="/log-in">Login</RouterLink>
-          <RouterLink v-if="authStore.isAuthenticated" to="/log-out">Logout</RouterLink>
+          <RouterLink
+            v-if="!authStore.isAuthenticated"
+            to="/log-in"
+            data-cy="login-cypress-test"
+            >Login</RouterLink
+          >
+          <RouterLink v-if="authStore.isAuthenticated" to="/log-out"
+            >Logout</RouterLink
+          >
         </nav>
       </div>
     </header>
@@ -96,12 +103,12 @@ const authStore = useAuthStore()
   .app-header {
     padding: var(--spacing-sm);
   }
-  
+
   .header-content {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .app-header h1 {
     font-size: var(--font-size-md);
   }

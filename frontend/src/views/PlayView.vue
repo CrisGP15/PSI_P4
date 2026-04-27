@@ -1,25 +1,24 @@
 <template>
   <div class="play-view" :style="backgroundStyle">
     <div class="content-overlay">
-      
       <div class="song-header" v-if="song">
         <h1>{{ song.title }}</h1>
         <p class="artist">{{ song.artist }}</p>
       </div>
 
-      <div class="audio-section" v-if="song?.audio_url">
-        <AudioPlayer 
+      <div class="audio-section">
+        <AudioPlayer
+          v-show="song?.audio_url"
           ref="audioPlayerRef"
-          :audio-src="song.audio_url"
+          :audio-src="song?.audio_url || ''"
           :stop-audio="stopAudioFlag"
           @on-time-update="handleTimeUpdate"
           @on-ended="handleSongEnded"
         />
       </div>
 
-      
       <div class="lyrics-section" v-if="song?.lyrics_url">
-        <LyricsDisplay 
+        <LyricsDisplay
           ref="lyricsDisplayRef"
           :lyrics-url="song.lyrics_url"
           :current-time="currentTime"
@@ -30,18 +29,15 @@
         />
       </div>
 
-      
       <div v-if="loading" class="loading">
         <p>Cargando canción...</p>
       </div>
 
-     
       <div v-if="error" class="error">
         <p>{{ error }}</p>
         <button @click="retryLoad">Reintentar</button>
       </div>
 
-      
       <div v-if="showSummary" class="summary-modal">
         <div class="summary-content">
           <h2>¡Canción Completada!</h2>
@@ -57,158 +53,156 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import AudioPlayer from '../components/AudioPlayer.vue'
-import LyricsDisplay from '../components/LyricsDisplay.vue'
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
+import AudioPlayer from "../components/AudioPlayer.vue";
+import LyricsDisplay from "../components/LyricsDisplay.vue";
 
 // Router y Store
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
 
-// Referencias a componentes 
-const audioPlayerRef = ref(null)
-const lyricsDisplayRef = ref(null)
+// Referencias a componentes
+const audioPlayerRef = ref(null);
+const lyricsDisplayRef = ref(null);
 
 // Estado reactivo
-const loading = ref(true)
-const error = ref(null)
-const song = ref(null)
-const currentTime = ref(0)
-const stopAudioFlag = ref(false)
-const showSummary = ref(false)
-const summary = ref({ correct: 0, wrong: 0 })
-const songUserSent = ref(false)
+const loading = ref(true);
+const error = ref(null);
+const song = ref(null);
+const currentTime = ref(0);
+const stopAudioFlag = ref(false);
+const showSummary = ref(false);
+const summary = ref({ correct: 0, wrong: 0 });
+const songUserSent = ref(false);
 
-// URL de la API 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'   //-----si da error, a ver si añadir una / al final se soluciona
+// URL de la API
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001"; //-----si da error, a ver si añadir una / al final se soluciona
 
 // Estilo de fondo (si hay imagen)
 const backgroundStyle = computed(() => {
   if (song.value?.background_image) {
     return {
       backgroundImage: `url(${song.value.background_image})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
   }
-  return {}
-})
+  return {};
+});
 
 // Calcular porcentaje
 const percentage = computed(() => {
-  const total = summary.value.correct + summary.value.wrong
-  if (total === 0) return 0
-  return Math.round((summary.value.correct / total) * 100)
-})
+  const total = summary.value.correct + summary.value.wrong;
+  if (total === 0) return 0;
+  return Math.round((summary.value.correct / total) * 100);
+});
 
 // Cargar datos de la canción al montar el componente
 onMounted(() => {
-  loadSong()
-})
+  loadSong();
+});
 
 // Limpiar al desmontar
 onUnmounted(() => {
   // Evitar enviar datos duplicados
-  songUserSent.value = true
-})
+  songUserSent.value = true;
+});
 
 // Obtener el ID de la canción de la URL
 function getSongId() {
   // Soporta tanto /play/:id como /songs/:id
-  return route.params.id || route.query.id
+  return route.params.id || route.query.id;
 }
 
 // Cargar canción desde la API
 async function loadSong() {
-  loading.value = true
-  error.value = null
-  showSummary.value = false
-  songUserSent.value = false
-  
-  const songId = getSongId()
-  
+  loading.value = true;
+  error.value = null;
+  showSummary.value = false;
+  songUserSent.value = false;
+
+  const songId = getSongId();
+
   if (!songId) {
     // Si no hay ID, cargar una canción aleatoria
-    await loadRandomSong()
-    return
+    await loadRandomSong();
+    return;
   }
-  
-  try {
-    const response = await fetch(`${API_URL}/api/v1/songs/${songId}/`)
-    
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: No se pudo cargar la canción`)
-    }
-    
-    const data = await response.json()
 
-    const baseURL = API_URL //http://localhost:8001
+  try {
+    const response = await fetch(`${API_URL}/api/v1/songs/${songId}/`);
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: No se pudo cargar la canción`);
+    }
+
+    const data = await response.json();
+
+    const baseURL = API_URL; //http://localhost:8001
     song.value = {
       ...data,
-      audio_url: data.audio_file,     
-      lyrics_url: data.lrc_file,  
-      background_image: data.background_image
-    }
-    
+      audio_url: data.audio_file,
+      lyrics_url: data.lrc_file,
+      background_image: data.background_image,
+    };
   } catch (err) {
-    console.error('Error cargando canción:', err)
-    error.value = err.message
-    
+    console.error("Error cargando canción:", err);
+    error.value = err.message;
+
     // Datos de ejemplo para pruebas locales
     song.value = {
       id: songId,
-      title: 'Here in the real world',
-      artist: 'Alan Jackson',
+      title: "Here in the real world",
+      artist: "Alan Jackson",
       audio_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.mp3`,
       lyrics_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.lrc`,
-      background_image: null
-    }
+      background_image: null,
+    };
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // Cargar canción aleatoria
 async function loadRandomSong() {
   try {
-    const response = await fetch(`${API_URL}/api/v1/songs/random/`)
-    
+    const response = await fetch(`${API_URL}/api/v1/songs/random/`);
+
     if (!response.ok) {
-      throw new Error('No se pudo cargar canción aleatoria')
+      throw new Error("No se pudo cargar canción aleatoria");
     }
-    
-    const data = await response.json()
-    const baseURL = API_URL //http://localhost:8001
+
+    const data = await response.json();
+    const baseURL = API_URL; //http://localhost:8001
     song.value = {
       ...data,
-      audio_url: data.audio_file,     
-      lyrics_url: data.lrc_file ,  
-      background_image: data.background_image 
-    }
-    
+      audio_url: data.audio_file,
+      lyrics_url: data.lrc_file,
+      background_image: data.background_image,
+    };
   } catch (err) {
-    console.error('Error cargando canción aleatoria:', err)
-    
+    console.error("Error cargando canción aleatoria:", err);
+
     // Datos de ejemplo
     song.value = {
       id: songId,
-      title: 'Here in the real world',
-      artist: 'Alan Jackson',
+      title: "Here in the real world",
+      artist: "Alan Jackson",
       audio_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.mp3`,
       lyrics_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.lrc`,
-      background_image: null
-    }
+      background_image: null,
+    };
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // Manejar actualización de tiempo desde AudioPlayer
 function handleTimeUpdate(time) {
-  currentTime.value = time
+  currentTime.value = time;
 }
 
 // Manejar fin de la canción
@@ -217,66 +211,66 @@ async function handleSongEnded() {
   setTimeout(() => {
     if (!showSummary.value) {
       // Si no hay resumen, forzar mostrar
-      showSummaryModal()
+      showSummaryModal();
     }
-  }, 500)
+  }, 500);
 }
 
 // Manejar parada de audio solicitada por LyricsDisplay
 function handleStopAudio() {
-  stopAudioFlag.value = true
+  stopAudioFlag.value = true;
 }
 
 // Manejar inicio de audio solicitado por LyricsDisplay
 function handleStartAudio() {
-  stopAudioFlag.value = false
+  stopAudioFlag.value = false;
 }
 
 // Manejar resumen de palabras desde LyricsDisplay
 async function handleSummary(summaryData) {
-  console.log('Resumen recibido:', summaryData)
-  summary.value = summaryData
-  showSummary.value = true
-  
+  console.log("Resumen recibido:", summaryData);
+  summary.value = summaryData;
+  showSummary.value = true;
+
   // Si el usuario está autenticado, guardar en SongUser
   if (authStore.isAuthenticated && !songUserSent.value && song.value) {
-    await saveSongUserResults()
+    await saveSongUserResults();
   }
 }
 
 // Manejar palabra completada (para estadísticas)
 function handleWordCompleted(wordData) {
   // Opcional: actualizar progreso en tiempo real
-  console.log('Palabra completada:', wordData)
+  console.log("Palabra completada:", wordData);
 }
 
 // Guardar resultados en SongUser
 async function saveSongUserResults() {
-  if (songUserSent.value) return
-  
+  if (songUserSent.value) return;
+
   try {
     const response = await fetch(`${API_URL}/api/v1/songusers/`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         // 'Authorization': `Bearer ${authStore.token}`
-        'Authorization': `Token ${authStore.token}`
+        Authorization: `Token ${authStore.token}`,
       },
       body: JSON.stringify({
         song: song.value.id,
         correct_guesses: summary.value.correct,
-        wrong_guesses: summary.value.wrong
-      })
-    })
-    
+        wrong_guesses: summary.value.wrong,
+      }),
+    });
+
     if (response.ok) {
-      console.log('Resultados guardados en SongUser')
-      songUserSent.value = true
+      console.log("Resultados guardados en SongUser");
+      songUserSent.value = true;
     } else {
-      console.error('Error guardando resultados:', await response.text())
+      console.error("Error guardando resultados:", await response.text());
     }
   } catch (err) {
-    console.error('Error en petición SongUser:', err)
+    console.error("Error en petición SongUser:", err);
   }
 }
 
@@ -284,41 +278,41 @@ async function saveSongUserResults() {
 function showSummaryModal() {
   // Obtener resumen de LyricsDisplay si no se ha recibido
   if (lyricsDisplayRef.value) {
-    const finalSummary = lyricsDisplayRef.value.getSummary()
-    summary.value = finalSummary
+    const finalSummary = lyricsDisplayRef.value.getSummary();
+    summary.value = finalSummary;
   }
-  showSummary.value = true
-  
+  showSummary.value = true;
+
   // Guardar resultados si es necesario
   if (authStore.isAuthenticated && !songUserSent.value && song.value) {
-    saveSongUserResults()
+    saveSongUserResults();
   }
 }
 
 // Reintentar carga
 function retryLoad() {
-  loadSong()
+  loadSong();
 }
 
 // Volver al inicio
 function goHome() {
-  router.push('/')
+  router.push("/");
 }
 
 // Repetir la misma canción
 function playAgain() {
-  showSummary.value = false
-  summary.value = { correct: 0, wrong: 0 }
-  currentTime.value = 0
-  stopAudioFlag.value = false
-  songUserSent.value = false
-  
+  showSummary.value = false;
+  summary.value = { correct: 0, wrong: 0 };
+  currentTime.value = 0;
+  stopAudioFlag.value = false;
+  songUserSent.value = false;
+
   // Reiniciar componentes
   if (audioPlayerRef.value) {
-    audioPlayerRef.value.reset()
+    audioPlayerRef.value.reset();
   }
   if (lyricsDisplayRef.value) {
-    lyricsDisplayRef.value.reset()
+    lyricsDisplayRef.value.reset();
   }
 }
 </script>
@@ -380,7 +374,8 @@ function playAgain() {
 }
 
 /* Estados de carga/error */
-.loading, .error {
+.loading,
+.error {
   text-align: center;
   padding: var(--spacing-xl);
 }
@@ -462,8 +457,12 @@ function playAgain() {
 
 /* Animaciones */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -482,20 +481,20 @@ function playAgain() {
   .content-overlay {
     padding: var(--spacing-md);
   }
-  
+
   .song-header h1 {
     font-size: var(--font-size-lg);
   }
-  
+
   .song-header .artist {
     font-size: var(--font-size-md);
   }
-  
+
   .lyrics-section {
     width: 95%;
     padding: var(--spacing-md);
   }
-  
+
   .summary-content {
     padding: var(--spacing-lg);
     width: 95%;

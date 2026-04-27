@@ -17,7 +17,7 @@
         @click="goToRandomSong"
         :disabled="loadingRandom"
       >
-        {{ loadingRandom ? 'Cargando...' : 'random song' }}
+        {{ loadingRandom ? 'Cargando...' : 'Random song' }}
       </button>
       <p v-if="randomError" class="error">{{ randomError }}</p>
     </section>
@@ -29,11 +29,12 @@
         <div class="search-bar">
           <input
             v-model="searchQuery"
+            data-cy="search_text"
             type="text"
             placeholder="Escribe el título de una canción..."
             aria-label="Buscar canciones"
           />
-          <button type="submit" :disabled="loadingSearch">
+          <button type="submit" :disabled="loadingSearch" data-cy="search_button">
             {{ loadingSearch ? 'Buscando...' : 'Buscar' }}
           </button>
         </div>
@@ -44,7 +45,7 @@
         <h3>Resultados</h3>
         <ul>
           <li v-for="song in searchResults" :key="song.id">
-            <RouterLink :to="`/songs/${song.id}`">
+            <RouterLink :to="`/songs/${song.id}`" :data-cy="song.title">
               {{ song.title }} — {{ song.artist }}
             </RouterLink>
           </li>

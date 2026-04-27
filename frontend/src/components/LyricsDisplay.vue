@@ -1,7 +1,6 @@
 <template>
   <div class="lyrics-display">
     <div class="lyrics-container">
-
       <!-- Mostrar líneas de la letra -->
       <div
         v-for="(line, index) in visibleLines"
@@ -9,8 +8,6 @@
         :class="{ 'current-line': line.isCurrent }"
         class="lyric-line"
       >
-      
-
         <!-- Línea sin hueco: texto normal -->
         <template v-if="!line.word">
           <span>{{ line.text }}</span>
@@ -24,14 +21,16 @@
           <input
             v-if="line.isCurrent"
             v-model="userInput"
+            data-cy="blankInput"
             type="text"
             class="word-input"
             :class="{
               correct: inputState === 'correct',
-              wrong:   inputState === 'wrong'
+              wrong: inputState === 'wrong',
             }"
             placeholder="___"
             @input="checkWord(line)"
+            @keydown.enter="submitWord(line)"
             autocomplete="off"
             autocorrect="off"
             autocapitalize="off"
@@ -46,206 +45,265 @@
     </div>
 
     <!-- Botón skip: solo visible cuando la línea actual tiene un hueco -->
-    <div v-if="currentLineHasWord" class="skip-wrap">
-      <button class="btn-skip" @click="skip">Skip</button>
+    <div v-if="hasAnyPendingWord" class="skip-wrap">
+      <button class="btn-skip" data-cy="skip" @click="skip">Skip</button>
     </div>
 
-   
     <div v-if="finished" class="summary">
       <h2>Canción completada</h2>
-      <p>Respuestas correctas: <strong>{{ correctCount }}</strong></p>
-      <p>Errores cometidos: <strong>{{ errorCount }}</strong></p>
-      <p>Porcentaje de aciertos: <strong>{{ successRate }}%</strong></p>
+      <p>
+        Correct answers: {{ correctCount }} - Wrong answers: {{ errorCount }}
+      </p>
+      <p>
+        Porcentaje de aciertos: <strong>{{ successRate }}%</strong>
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from "vue";
 
 const props = defineProps({
   lyricsUrl: {
     type: String,
-    required: true
+    required: true,
   },
   currentTime: {
     type: Number,
-    default: 0
-  }
-})
+    default: 0,
+  },
+});
 
-const emit = defineEmits(['stopAudio', 'startAudio', 'summary'])
+const emit = defineEmits(["stopAudio", "startAudio", "summary"]);
 
-// ── Estado 
-const lyricsData       = ref([])
-const currentLineIndex = ref(-1)
-const visibleLines     = ref([])
+// ── Estado
+const lyricsData = ref([]);
+const currentLineIndex = ref(-1);
+const visibleLines = ref([]);
 
+const userInput = ref("");
+const inputState = ref("");
+const correctCount = ref(0);
+const errorCount = ref(0);
+const finished = ref(false);
 
-const userInput    = ref('')
-const inputState   = ref('')     
-const correctCount = ref(0)
-const errorCount   = ref(0)
-const finished     = ref(false)
-
-// ── Carga del archivo LRC 
+// ── Carga del archivo LRC
 onMounted(async () => {
-  await loadLyrics()
-})
+  await loadLyrics();
+});
 
 async function loadLyrics() {
   try {
-    const response = await fetch(props.lyricsUrl)
-    const text     = await response.text()
-    parseLRC(text)
+    const response = await fetch(props.lyricsUrl);
+    const text = await response.text();
+    parseLRC(text);
   } catch (error) {
-    console.error('Error loading lyrics:', error)
+    console.error("Error loading lyrics:", error);
   }
 }
-
 
 function parseLRC(lrcText) {
-  const lines  = lrcText.split('\n')
-  const parsed = []
+  const lines = lrcText.split("\n");
+  const parsed = [];
 
-  lines.forEach(line => {
-    const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2})\](.*)/)
-    if (!match) return
+  lines.forEach((line) => {
+    const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2})\](.*)/);
+    if (!match) return;
 
-    const minutes = parseInt(match[1])
-    const seconds = parseInt(match[2])
-    const time    = minutes * 60 + seconds
-    const text    = match[4].trim()
+    const minutes = parseInt(match[1]);
+    const seconds = parseInt(match[2]);
+    const time = minutes * 60 + seconds;
+    const text = match[4].trim();
 
-    if (!text) return
+    if (!text) return;
 
-   
-    const wordMatch = text.match(/\{(\w+)\}/)
+    const wordMatch = text.match(/\{(\w+)\}/);
     if (wordMatch) {
-      const word   = wordMatch[1]
-      const idx    = text.indexOf('{' + word + '}')
-      const before = text.slice(0, idx)
-      const after  = text.slice(idx + word.length + 2)
-      parsed.push({ time, text, word, before, after, answered: false })
+      const word = wordMatch[1];
+      const idx = text.indexOf("{" + word + "}");
+      const before = text.slice(0, idx);
+      const after = text.slice(idx + word.length + 2);
+      parsed.push({ time, text, word, before, after, answered: false });
     } else {
-      parsed.push({ time, text, word: null, before: '', after: '', answered: false })
+      parsed.push({
+        time,
+        text,
+        word: null,
+        before: "",
+        after: "",
+        answered: false,
+      });
     }
-  })
+  });
 
-  lyricsData.value = parsed
+  lyricsData.value = parsed;
   if (parsed.length > 0) {
-    currentLineIndex.value = 0
-    updateVisibleLines()
+    currentLineIndex.value = 0;
+    updateVisibleLines();
   }
 }
 
-//  Sincronización con el tiempo del audio 
-watch(() => props.currentTime, (time) => {
-  updateCurrentLine(time)
-})
+//  Sincronización con el tiempo del audio
+watch(
+  () => props.currentTime,
+  (time) => {
+    updateCurrentLine(time);
+  }
+);
 
 function updateCurrentLine(time) {
-  let newIndex = -1
+  let newIndex = -1;
   for (let i = 0; i < lyricsData.value.length; i++) {
     if (time >= lyricsData.value[i].time) {
-      newIndex = i
+      newIndex = i;
     } else {
-      break
+      break;
     }
   }
 
   if (newIndex !== currentLineIndex.value) {
-    currentLineIndex.value = newIndex
-    updateVisibleLines()
+    currentLineIndex.value = newIndex;
+    updateVisibleLines();
 
-   
-    const line = lyricsData.value[newIndex]
+    const line = lyricsData.value[newIndex];
     if (line && line.word && !line.answered) {
-      userInput.value  = ''
-      inputState.value = ''
-      emit('stopAudio')
+      userInput.value = "";
+      inputState.value = "";
+      emit("stopAudio");
       nextTick(() => {
-        const input = document.querySelector('.word-input')
-        if (input) input.focus()
-      })
+        const input = document.querySelector(".word-input");
+        if (input) input.focus();
+      });
     }
   }
 }
 
-
 function updateVisibleLines() {
-  const lines = []
+  const lines = [];
   for (let i = -1; i <= 1; i++) {
-    const index = currentLineIndex.value + i
+    const index = currentLineIndex.value + i;
     if (index >= 0 && index < lyricsData.value.length) {
       lines.push({
         ...lyricsData.value[index],
-        isCurrent: i === 0
-      })
+        isCurrent: i === 0,
+      });
     }
   }
-  visibleLines.value = lines
+  visibleLines.value = lines;
 }
 
-// ── Validación de la palabra 
+// ── Validación de la palabra
 function checkWord(line) {
-  if (!line || !line.word) return
+  if (!line || !line.word) return;
 
-  const typed   = userInput.value.trim().toLowerCase()
-  const correct = line.word.toLowerCase()
+  if (
+    currentLineIndex.value < 0 ||
+    currentLineIndex.value >= lyricsData.value.length
+  )
+    return;
+
+  const typed = userInput.value.trim().toLowerCase();
+  const correct = line.word.toLowerCase();
 
   if (typed === correct) {
-    inputState.value = 'correct'
-    lyricsData.value[currentLineIndex.value].answered = true
-    correctCount.value++
+    inputState.value = "correct";
+    lyricsData.value[currentLineIndex.value].answered = true;
+    correctCount.value++;
     setTimeout(() => {
-      userInput.value  = ''
-      inputState.value = ''
-      emit('startAudio')
-    }, 300)
+      userInput.value = "";
+      inputState.value = "";
+      emit("startAudio");
+    }, 300);
   } else if (typed.length >= correct.length) {
-    inputState.value = 'wrong'
-    errorCount.value++
+    inputState.value = "wrong";
+    errorCount.value++;
     setTimeout(() => {
-      userInput.value  = ''
-      inputState.value = ''
-    }, 400)
+      userInput.value = "";
+      inputState.value = "";
+    }, 400);
   }
 }
 
-//  Botón skip 
+//  Botón skip
 function skip() {
-  const line = lyricsData.value[currentLineIndex.value]
-  if (!line || !line.word) return
+  // Buscar la línea activa con hueco, o la siguiente pendiente
+  let targetIndex = currentLineIndex.value
+  
+  // Si la línea actual no tiene hueco pendiente, buscar la siguiente
+  const currentLine = lyricsData.value[targetIndex]
+  if (!currentLine || !currentLine.word || currentLine.answered) {
+    targetIndex = lyricsData.value.findIndex(
+      (l, i) => i > currentLineIndex.value && l.word && !l.answered
+    )
+    if (targetIndex === -1) return
+    currentLineIndex.value = targetIndex
+    updateVisibleLines()
+  }
+
   errorCount.value++
-  lyricsData.value[currentLineIndex.value].answered = true
-  userInput.value  = ''
+  lyricsData.value[targetIndex].answered = true
+  userInput.value = ''
   inputState.value = ''
   emit('startAudio')
 }
 
 //  Fin de canción
 function handleSongEnded() {
-  finished.value = true
-  emit('summary', {
+  finished.value = true;
+  emit("summary", {
     correct: correctCount.value,
-    errors:  errorCount.value,
-    total:   lyricsData.value.filter(l => l.word).length,
-  })
+    wrong: errorCount.value,
+    total: lyricsData.value.filter((l) => l.word).length,
+  });
 }
-defineExpose({ handleSongEnded })
+defineExpose({ handleSongEnded });
 
-//  Computed 
+function submitWord(line) {
+  if (!line || !line.word) return;
+  // Misma guarda que en checkWord
+  if (
+    currentLineIndex.value < 0 ||
+    currentLineIndex.value >= lyricsData.value.length
+  )
+    return;
+
+  const typed = userInput.value.trim().toLowerCase();
+  const correct = line.word.toLowerCase();
+
+  if (typed === correct) {
+    inputState.value = "correct";
+    lyricsData.value[currentLineIndex.value].answered = true;
+    correctCount.value++;
+    setTimeout(() => {
+      userInput.value = "";
+      inputState.value = "";
+      emit("startAudio");
+    }, 300);
+  } else {
+    inputState.value = "wrong";
+    errorCount.value++;
+    setTimeout(() => {
+      inputState.value = "";
+    }, 400);
+  }
+}
+
+//  Computed
 const currentLineHasWord = computed(() => {
-  const line = lyricsData.value[currentLineIndex.value]
-  return line && line.word && !line.answered
-})
+  const line = lyricsData.value[currentLineIndex.value];
+  return line && line.word && !line.answered;
+});
 
 const successRate = computed(() => {
-  const total = lyricsData.value.filter(l => l.word).length
-  if (!total) return 0
-  return Math.round((correctCount.value / total) * 100)
-})
+  const total = lyricsData.value.filter((l) => l.word).length;
+  if (!total) return 0;
+  return Math.round((correctCount.value / total) * 100);
+});
+
+const hasAnyPendingWord = computed(() => {
+  return lyricsData.value.some(l => l.word && !l.answered)
+});
 </script>
 
 <style scoped>
