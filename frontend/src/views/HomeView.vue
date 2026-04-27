@@ -87,9 +87,10 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 // URL base de la API — se define en el archivo .env
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
 // ── Estado: Top 3 canciones 
+const topSongs = ref([])
 const loadingTop  = ref(false)
 const topError    = ref(null)
 
@@ -98,12 +99,12 @@ async function fetchTopSongs() {
   topError.value   = null
   try {
     const res = await fetch(
-      `${API_URL}/api/songs/?ordering=-number_times_played&limit=3`
+      `${API_URL}/api/v1/songs/top/?n=3`
     )
     if (!res.ok) throw new Error(`Error ${res.status}`)
     const data = await res.json()
-    // La API de Django REST Framework devuelve { results: [...] } cuando hay paginación
-    topSongs.value = data.results ?? data
+    // El endpoint /top/ devuelve directamente un array
+    topSongs.value = Array.isArray(data) ? data : (data.results ?? data)
   } catch (err) {
     topError.value = 'No se pudieron cargar las canciones populares.'
     console.error(err)
@@ -113,6 +114,7 @@ async function fetchTopSongs() {
 }
 
 // ── Estado: Buscador 
+const searchQuery = ref('')
 const searchResults = ref([])
 const loadingSearch = ref(false)
 const searchError   = ref(null)
@@ -128,11 +130,11 @@ async function searchSongs() {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/songs/?search=${encodeURIComponent(searchQuery.value)}`
+      `${API_URL}/api/v1/songs/search/?title=${encodeURIComponent(searchQuery.value)}`
     )
     if (!res.ok) throw new Error(`Error ${res.status}`)
     const data = await res.json()
-    searchResults.value = data.results ?? data
+    searchResults.value = Array.isArray(data) ? data : (data.results ?? data)
     searchDone.value    = true
   } catch (err) {
     searchError.value = 'Error al buscar canciones. Inténtalo de nuevo.'
@@ -150,7 +152,7 @@ async function goToRandomSong() {
   loadingRandom.value = true
   randomError.value   = null
   try {
-    const res = await fetch(`${API_URL}/api/songs/random/`)
+    const res = await fetch(`${API_URL}/api/v1/songs/random/`)
     if (!res.ok) throw new Error(`Error ${res.status}`)
     const song = await res.json()
     router.push(`/songs/${song.id}`)

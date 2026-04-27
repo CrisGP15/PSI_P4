@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     #
     "django_extensions",
+    "corsheaders",
     # news
     "rest_framework",
     "rest_framework.authtoken",  # Para la autenticación por token
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -180,7 +182,15 @@ DJOSER = {
         "current_user": "djoser.serializers.UserSerializer",
     },
 }
+# CORS configuration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
 
+# 
 # URLs de la API
 API_PREFIX = "api/v1/"
 
