@@ -1,35 +1,39 @@
 @import './base.css';
 
+/* Solo lo esencial global */
 #app {
-  max-width: 1280px;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Contenedor responsivo */
+.container {
+  width: 100%;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 2rem;
-
-  font-weight: normal;
+  padding: 0 var(--content-padding);
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--content-padding-mobile);
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+/* Scroll personalizado (opcional) */
+::-webkit-scrollbar {
+  width: 8px;
+}
 
-  #app {
-    /* display: grid;
-    grid-template-columns: 1fr 1fr; */
-    padding: 0 2rem;
-  }
+::-webkit-scrollbar-track {
+  background: var(--color-background-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-dark);
 }

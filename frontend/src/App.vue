@@ -32,35 +32,47 @@ const authStore = useAuthStore()
   min-height: 100vh;
 }
 
+/* Header */
 .app-header {
-  background-color: #2c3e50;
-  color: white;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-background-dark-header);
+  border-bottom: 1px solid rgba(0, 96, 27, 0.687);
+  padding: var(--spacing-md) var(--spacing-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
 .app-header h1 {
-  margin: 0 0 1rem 0;
-  font-size: 2rem;
+  font-size: var(--font-size-lg);
+  margin: 0;
+  background: linear-gradient(135deg, var(--color-primary), #62b69b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
+/* Navegación */
 .navbar {
   display: flex;
-  gap: 1.5rem;
+  gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
 
 .navbar a {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  color: var(--color-text-light);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
 }
 
 .navbar a:hover {
@@ -68,29 +80,30 @@ const authStore = useAuthStore()
 }
 
 .navbar a.router-link-active {
-  background-color: #42b983;
+  background-color: var(--color-primary);
+  color: white;
 }
 
+/* Contenido principal */
 .app-content {
   flex: 1;
-  max-width: none !important;
-  width: 100% !important;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
+  .app-header {
+    padding: var(--spacing-sm);
+  }
+  
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
   .app-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .navbar {
-    gap: 0.5rem;
-  }
-
-  .navbar a {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
+    font-size: var(--font-size-md);
   }
 }
 </style>

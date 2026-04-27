@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 class SongSerializer(serializers.ModelSerializer):
     """Serializer para el modelo Song (solo lectura)"""
 
+    audio_url = serializers.SerializerMethodField()
+    lyrics_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Song
         fields = [
@@ -17,10 +20,24 @@ class SongSerializer(serializers.ModelSerializer):
             "audio_file",
             "lrc_file",
             "background_image",
+            "audio_url",
+            "lyrics_url",
             "created_at",
             "number_times_played",
         ]
         read_only_fields = ["id", "created_at", "number_times_played"]
+
+    def get_audio_url(self, obj):
+        if not obj.audio_file:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.audio_file.url) if request else obj.audio_file.url
+
+    def get_lyrics_url(self, obj):
+        if not obj.lrc_file:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.lrc_file.url) if request else obj.lrc_file.url
 
 
 class SongUserSerializer(serializers.ModelSerializer):

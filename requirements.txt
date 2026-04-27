@@ -45,4 +45,4 @@ coverage
 
 dj-database-url
 
-npm install cypress@13.3.3
+# npm install cypress@13.3.3

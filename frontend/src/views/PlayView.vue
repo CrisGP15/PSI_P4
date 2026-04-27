@@ -10,7 +10,7 @@
       <div class="audio-section" v-if="song?.audio_url">
         <AudioPlayer 
           ref="audioPlayerRef"
-          :audio-url="song.audio_url"
+          :audio-src="song.audio_url"
           :stop-audio="stopAudioFlag"
           @on-time-update="handleTimeUpdate"
           @on-ended="handleSongEnded"
@@ -144,7 +144,14 @@ async function loadSong() {
     }
     
     const data = await response.json()
-    song.value = data
+
+    const baseURL = API_URL //http://localhost:8001
+    song.value = {
+      ...data,
+      audio_url: data.audio_file,     
+      lyrics_url: data.lrc_file,  
+      background_image: data.background_image
+    }
     
   } catch (err) {
     console.error('Error cargando canción:', err)
@@ -155,8 +162,8 @@ async function loadSong() {
       id: songId,
       title: 'Here in the real world',
       artist: 'Alan Jackson',
-      audio_url: '/audio/here_in_the_real_world.mp3',
-      lyrics_url: '/lyrics/here_in_the_real_world.lrc',
+      audio_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.mp3`,
+      lyrics_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.lrc`,
       background_image: null
     }
   } finally {
@@ -174,18 +181,25 @@ async function loadRandomSong() {
     }
     
     const data = await response.json()
-    song.value = data
+    const baseURL = API_URL //http://localhost:8001
+    song.value = {
+      ...data,
+      audio_url: data.audio_file,     
+      lyrics_url: data.lrc_file ,  
+      background_image: data.background_image 
+    }
     
   } catch (err) {
     console.error('Error cargando canción aleatoria:', err)
     
     // Datos de ejemplo
     song.value = {
-      id: 1,
+      id: songId,
       title: 'Here in the real world',
       artist: 'Alan Jackson',
-      audio_url: '/audio/here_in_the_real_world.mp3',
-      lyrics_url: '/lyrics/here_in_the_real_world.lrc'
+      audio_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.mp3`,
+      lyrics_url: `${API_URL}/media/media/Alan_Jackson_-_Here_In_The_Real_World.lrc`,
+      background_image: null
     }
   } finally {
     loading.value = false
@@ -241,19 +255,17 @@ async function saveSongUserResults() {
   if (songUserSent.value) return
   
   try {
-    const response = await fetch(`${API_URL}/api/v1/songuser/`, {
+    const response = await fetch(`${API_URL}/api/v1/songusers/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         // 'Authorization': `Bearer ${authStore.token}`
         'Authorization': `Token ${authStore.token}`
-
       },
       body: JSON.stringify({
         song: song.value.id,
-        correct_words: summary.value.correct, //nombre correcto
-        wrong_words: summary.value.wrong, // nombre correcto
-        percentage: percentage.value
+        correct_guesses: summary.value.correct,
+        wrong_guesses: summary.value.wrong
       })
     })
     
@@ -312,114 +324,181 @@ function playAgain() {
 </script>
 
 <style scoped>
+/* Contenedor principal */
 .play-view {
   min-height: 100vh;
-  background-color: #1a1a2e;
-  position: relative;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
+/* Overlay para mejorar legibilidad */
 .content-overlay {
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--color-background-overlay);
   min-height: 100vh;
-  padding: 20px;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  backdrop-filter: blur(2px);
 }
 
+/* Cabecera de la canción */
 .song-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .song-header h1 {
-  color: white;
-  font-size: 2em;
-  margin-bottom: 10px;
+  font-size: var(--font-size-2xl);
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-xs);
 }
 
 .song-header .artist {
-  color: #42b983;
-  font-size: 1.2em;
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
 }
 
+/* Reproductor de audio */
 .audio-section {
   max-width: 600px;
-  margin: 0 auto 30px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  width: 100%;
+  margin: 0 auto var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
 }
 
+/* Sección de letra */
 .lyrics-section {
-  max-width: 800px;
+  max-width: 900px;
+  width: 90%;
   margin: 0 auto;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
   min-height: 400px;
 }
 
+/* Estados de carga/error */
 .loading, .error {
   text-align: center;
-  color: white;
-  padding: 50px;
+  padding: var(--spacing-xl);
+}
+
+.loading {
+  color: var(--color-text-muted);
 }
 
 .error {
-  color: #ff6b6b;
+  color: var(--color-error);
 }
 
 .error button {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background-color: #42b983;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
+.error button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* Modal de resumen */
 .summary-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn var(--transition-normal);
 }
 
 .summary-content {
-  background: white;
-  padding: 40px;
-  border-radius: 15px;
+  background: var(--color-text-light);
+  color: var(--color-background-dark);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
   text-align: center;
   max-width: 400px;
+  width: 90%;
+  animation: slideUp var(--transition-normal);
 }
 
 .summary-content h2 {
-  color: #42b983;
-  margin-bottom: 20px;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-md);
 }
 
 .summary-content p {
-  font-size: 1.2em;
-  margin: 10px 0;
+  font-size: var(--font-size-md);
+  margin: var(--spacing-sm) 0;
 }
 
 .summary-content button {
-  margin: 10px;
-  padding: 10px 20px;
-  background-color: #42b983;
+  margin: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all var(--transition-fast);
 }
 
 .summary-content button:hover {
-  background-color: #359268;
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content-overlay {
+    padding: var(--spacing-md);
+  }
+  
+  .song-header h1 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .song-header .artist {
+    font-size: var(--font-size-md);
+  }
+  
+  .lyrics-section {
+    width: 95%;
+    padding: var(--spacing-md);
+  }
+  
+  .summary-content {
+    padding: var(--spacing-lg);
+    width: 95%;
+  }
 }
 </style>

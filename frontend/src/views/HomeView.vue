@@ -183,6 +183,7 @@ onMounted(() => {
 
 /* Hero */
 .hero h1 {
+  color: #333;
   font-size: 2rem;
   margin: 0 0 0.5rem;
 }

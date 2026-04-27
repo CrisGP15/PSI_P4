@@ -133,6 +133,10 @@ function parseLRC(lrcText) {
   })
 
   lyricsData.value = parsed
+  if (parsed.length > 0) {
+    currentLineIndex.value = 0
+    updateVisibleLines()
+  }
 }
 
 //  Sincronización con el tiempo del audio 
@@ -257,7 +261,7 @@ const successRate = computed(() => {
 }
 
 .current-line {
-  background-color: #ffff99;
+  background-color: #2e2e2b;
   font-weight: bold;
   border-left: 4px solid #42b983;
   border-radius: 0;
