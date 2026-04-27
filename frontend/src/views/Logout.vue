@@ -27,6 +27,7 @@ onMounted(() => {
 
 <style scoped>
 .logout {
+  color: #333;
   text-align: center;
   margin-top: 100px;
 }
