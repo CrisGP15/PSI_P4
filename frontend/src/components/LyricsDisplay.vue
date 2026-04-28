@@ -1,43 +1,40 @@
 <template>
   <div class="lyrics-display">
     <div class="lyrics-container">
-
-      <!-- Mostrar líneas de la letra -->
       <div
         v-for="(line, index) in visibleLines"
         :key="index"
         :class="{ 'current-line': line.isCurrent }"
         class="lyric-line"
       >
-      
-
-        <!-- Línea sin hueco: texto normal -->
         <template v-if="!line.word">
           <span>{{ line.text }}</span>
         </template>
 
-        <!-- Línea con hueco -->
         <template v-else>
           <span>{{ line.before }}</span>
 
-          <!-- Input real de Vue: solo activo en la línea actual -->
+          <!-- Palabra ya respondida: se muestra como texto -->
+          <span v-if="line.answered" class="answered-word">
+            {{ line.word }}
+          </span>
+
+          <!-- Input activo solo si es la línea actual y no respondida -->
           <input
-            v-if="line.isCurrent"
+            v-else-if="line.isCurrent"
             v-model="userInput"
             type="text"
             class="word-input"
-            :class="{
-              correct: inputState === 'correct',
-              wrong:   inputState === 'wrong'
-            }"
+            :class="{ wrong: inputState === 'wrong' }"
             placeholder="___"
-            @input="checkWord(line)"
+            @keyup.enter="checkWord(line)"
             autocomplete="off"
             autocorrect="off"
             autocapitalize="off"
             spellcheck="false"
           />
-          <!-- En líneas no activas mostrar el hueco como guiones -->
+
+          <!-- Línea inactiva y no respondida: hueco -->
           <span v-else class="blank">___</span>
 
           <span>{{ line.after }}</span>
@@ -45,87 +42,75 @@
       </div>
     </div>
 
-    <!-- Botón skip: solo visible cuando la línea actual tiene un hueco -->
     <div v-if="currentLineHasWord" class="skip-wrap">
       <button class="btn-skip" @click="skip">Skip</button>
     </div>
 
-   
     <div v-if="finished" class="summary">
       <h2>Canción completada</h2>
-      <p>Respuestas correctas: <strong>{{ correctCount }}</strong></p>
-      <p>Errores cometidos: <strong>{{ errorCount }}</strong></p>
-      <p>Porcentaje de aciertos: <strong>{{ successRate }}%</strong></p>
+      <p>Correctas: <strong>{{ correctCount }}</strong></p>
+      <p>Fallos: <strong>{{ errorCount }}</strong></p>
+      <p>Porcentaje: <strong>{{ successRate }}%</strong></p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 const props = defineProps({
-  lyricsUrl: {
-    type: String,
-    required: true
-  },
-  currentTime: {
-    type: Number,
-    default: 0
-  }
+  lyricsUrl: { type: String, required: true },
+  currentTime: { type: Number, default: 0 }
 })
 
 const emit = defineEmits(['stopAudio', 'startAudio', 'summary'])
 
-// ── Estado 
-const lyricsData       = ref([])
+// Estado
+const lyricsData = ref([])
 const currentLineIndex = ref(-1)
-const visibleLines     = ref([])
-
-
-const userInput    = ref('')
-const inputState   = ref('')     
+const visibleLines = ref([])
+const userInput = ref('')
+const inputState = ref('')
 const correctCount = ref(0)
-const errorCount   = ref(0)
-const finished     = ref(false)
+const errorCount = ref(0)
+const finished = ref(false)
 
-// ── Carga del archivo LRC 
 onMounted(async () => {
   await loadLyrics()
+  if (lyricsData.value.length) {
+    updateCurrentLine(props.currentTime)  // inicializar índice según tiempo actual
+  }
 })
 
 async function loadLyrics() {
   try {
-    const response = await fetch(props.lyricsUrl)
-    const text     = await response.text()
+    const res = await fetch(props.lyricsUrl)
+    const text = await res.text()
     parseLRC(text)
-  } catch (error) {
-    console.error('Error loading lyrics:', error)
+  } catch (err) {
+    console.error('Error cargando letras:', err)
   }
 }
 
-
 function parseLRC(lrcText) {
-  const lines  = lrcText.split('\n')
+  const lines = lrcText.split('\n')
   const parsed = []
 
   lines.forEach(line => {
     const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2})\](.*)/)
     if (!match) return
-
     const minutes = parseInt(match[1])
     const seconds = parseInt(match[2])
-    const time    = minutes * 60 + seconds
-    const text    = match[4].trim()
-
+    const time = minutes * 60 + seconds
+    const text = match[4].trim()
     if (!text) return
 
-   
     const wordMatch = text.match(/\{(\w+)\}/)
     if (wordMatch) {
-      const word   = wordMatch[1]
-      const idx    = text.indexOf('{' + word + '}')
+      const word = wordMatch[1]
+      const idx = text.indexOf('{' + word + '}')
       const before = text.slice(0, idx)
-      const after  = text.slice(idx + word.length + 2)
+      const after = text.slice(idx + word.length + 2)
       parsed.push({ time, text, word, before, after, answered: false })
     } else {
       parsed.push({ time, text, word: null, before: '', after: '', answered: false })
@@ -133,18 +118,35 @@ function parseLRC(lrcText) {
   })
 
   lyricsData.value = parsed
-  if (parsed.length > 0) {
+  if (parsed.length) {
     currentLineIndex.value = 0
     updateVisibleLines()
   }
 }
 
-//  Sincronización con el tiempo del audio 
 watch(() => props.currentTime, (time) => {
   updateCurrentLine(time)
 })
 
 function updateCurrentLine(time) {
+  // Si la línea actual tiene palabra NO respondida, no cambiar de línea
+  if (currentLineIndex.value >= 0) {
+    const curr = lyricsData.value[currentLineIndex.value]
+    if (curr && curr.word && !curr.answered) {
+      // Calcular final de esta línea (tiempo de la siguiente)
+      let nextTime = Infinity
+      if (currentLineIndex.value + 1 < lyricsData.value.length) {
+        nextTime = lyricsData.value[currentLineIndex.value + 1].time
+      }
+      // Si hemos superado el final de la línea y aún no respondió → pausar
+      if (time >= nextTime) {
+        emit('stopAudio')
+      }
+      return // No avanzar
+    }
+  }
+
+  // Calcular nueva línea según el tiempo
   let newIndex = -1
   for (let i = 0; i < lyricsData.value.length; i++) {
     if (time >= lyricsData.value[i].time) {
@@ -154,32 +156,24 @@ function updateCurrentLine(time) {
     }
   }
 
+  // Si el tiempo es anterior a la primera línea, mostrar la primera como "próxima"
+  if (newIndex === -1 && lyricsData.value.length) {
+    newIndex = 0
+  }
+
   if (newIndex !== currentLineIndex.value) {
     currentLineIndex.value = newIndex
     updateVisibleLines()
-
-   
-    const line = lyricsData.value[newIndex]
-    if (line && line.word && !line.answered) {
-      userInput.value  = ''
-      inputState.value = ''
-      emit('stopAudio')
-      nextTick(() => {
-        const input = document.querySelector('.word-input')
-        if (input) input.focus()
-      })
-    }
   }
 }
-
 
 function updateVisibleLines() {
   const lines = []
   for (let i = -1; i <= 1; i++) {
-    const index = currentLineIndex.value + i
-    if (index >= 0 && index < lyricsData.value.length) {
+    const idx = currentLineIndex.value + i
+    if (idx >= 0 && idx < lyricsData.value.length) {
       lines.push({
-        ...lyricsData.value[index],
+        ...lyricsData.value[idx],
         isCurrent: i === 0
       })
     }
@@ -187,55 +181,55 @@ function updateVisibleLines() {
   visibleLines.value = lines
 }
 
-// ── Validación de la palabra 
 function checkWord(line) {
-  if (!line || !line.word) return
+  if (!line || !line.word || line.answered) return
 
-  const typed   = userInput.value.trim().toLowerCase()
-  const correct = line.word.toLowerCase()
+  const typed = userInput.value.trim().toLowerCase()
+  const correctWord = line.word.toLowerCase()
 
-  if (typed === correct) {
-    inputState.value = 'correct'
-    lyricsData.value[currentLineIndex.value].answered = true
+  if (typed === correctWord) {
+    // Acierto
+    line.answered = true
     correctCount.value++
-    setTimeout(() => {
-      userInput.value  = ''
-      inputState.value = ''
-      emit('startAudio')
-    }, 300)
-  } else if (typed.length >= correct.length) {
+    userInput.value = ''
+    inputState.value = ''
+    
+    emit('startAudio')
+    updateCurrentLine(props.currentTime) // actualizar índice 
+  } else {
+    // Error
     inputState.value = 'wrong'
     errorCount.value++
+    userInput.value = ''
     setTimeout(() => {
-      userInput.value  = ''
       inputState.value = ''
     }, 400)
+    // No emitimos startAudio, la música sigue pausada si lo estaba
   }
 }
 
-//  Botón skip 
 function skip() {
   const line = lyricsData.value[currentLineIndex.value]
-  if (!line || !line.word) return
+  if (!line || !line.word || line.answered) return
+
+  line.answered = true
   errorCount.value++
-  lyricsData.value[currentLineIndex.value].answered = true
-  userInput.value  = ''
+  userInput.value = ''
   inputState.value = ''
+
   emit('startAudio')
+  updateCurrentLine(props.currentTime)
 }
 
-//  Fin de canción
 function handleSongEnded() {
   finished.value = true
   emit('summary', {
     correct: correctCount.value,
-    errors:  errorCount.value,
-    total:   lyricsData.value.filter(l => l.word).length,
+    errors: errorCount.value,
+    total: lyricsData.value.filter(l => l.word).length
   })
 }
-defineExpose({ handleSongEnded })
 
-//  Computed 
 const currentLineHasWord = computed(() => {
   const line = lyricsData.value[currentLineIndex.value]
   return line && line.word && !line.answered
@@ -246,6 +240,8 @@ const successRate = computed(() => {
   if (!total) return 0
   return Math.round((correctCount.value / total) * 100)
 })
+
+defineExpose({ handleSongEnded, getSummary: () => ({ correct: correctCount.value, wrong: errorCount.value }) })
 </script>
 
 <style scoped>
@@ -326,6 +322,8 @@ const successRate = computed(() => {
   background: #f0faf5;
   border: 1px solid #42b983;
   border-radius: 8px;
+  color: #333;
+  
 }
 .summary h2 {
   font-size: 1.1rem;
@@ -335,5 +333,6 @@ const successRate = computed(() => {
 .summary p {
   margin: 0.3rem 0;
   font-size: 0.95rem;
+  color: #333;
 }
 </style>
