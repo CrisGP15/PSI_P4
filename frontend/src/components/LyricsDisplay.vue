@@ -23,6 +23,7 @@
           <input
             v-else-if="line.isCurrent"
             v-model="userInput"
+            data-cy="blankInput"
             type="text"
             class="word-input"
             :class="{ wrong: inputState === 'wrong' }"
@@ -63,7 +64,7 @@ const props = defineProps({
   currentTime: { type: Number, default: 0 }
 })
 
-const emit = defineEmits(['stopAudio', 'startAudio', 'summary'])
+const emit = defineEmits(["stopAudio", "startAudio", "summary"]);
 
 // Estado
 const lyricsData = ref([])
@@ -113,9 +114,16 @@ function parseLRC(lrcText) {
       const after = text.slice(idx + word.length + 2)
       parsed.push({ time, text, word, before, after, answered: false })
     } else {
-      parsed.push({ time, text, word: null, before: '', after: '', answered: false })
+      parsed.push({
+        time,
+        text,
+        word: null,
+        before: "",
+        after: "",
+        answered: false,
+      });
     }
-  })
+  });
 
   lyricsData.value = parsed
   if (parsed.length) {
@@ -150,9 +158,9 @@ function updateCurrentLine(time) {
   let newIndex = -1
   for (let i = 0; i < lyricsData.value.length; i++) {
     if (time >= lyricsData.value[i].time) {
-      newIndex = i
+      newIndex = i;
     } else {
-      break
+      break;
     }
   }
 
@@ -168,7 +176,7 @@ function updateCurrentLine(time) {
 }
 
 function updateVisibleLines() {
-  const lines = []
+  const lines = [];
   for (let i = -1; i <= 1; i++) {
     const idx = currentLineIndex.value + i
     if (idx >= 0 && idx < lyricsData.value.length) {
@@ -178,7 +186,7 @@ function updateVisibleLines() {
       })
     }
   }
-  visibleLines.value = lines
+  visibleLines.value = lines;
 }
 
 function checkWord(line) {
@@ -222,8 +230,8 @@ function skip() {
 }
 
 function handleSongEnded() {
-  finished.value = true
-  emit('summary', {
+  finished.value = true;
+  emit("summary", {
     correct: correctCount.value,
     errors: errorCount.value,
     total: lyricsData.value.filter(l => l.word).length
@@ -231,9 +239,9 @@ function handleSongEnded() {
 }
 
 const currentLineHasWord = computed(() => {
-  const line = lyricsData.value[currentLineIndex.value]
-  return line && line.word && !line.answered
-})
+  const line = lyricsData.value[currentLineIndex.value];
+  return line && line.word && !line.answered;
+});
 
 const successRate = computed(() => {
   const total = lyricsData.value.filter(l => l.word).length

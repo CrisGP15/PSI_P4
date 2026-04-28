@@ -8,6 +8,7 @@
           type="text" 
           id="username" 
           v-model="username" 
+          data-cy="username"
           required 
         />
         
@@ -16,6 +17,7 @@
           type="password" 
           id="password" 
           v-model="password" 
+          data-cy="password"
           required 
         />
       </div>

@@ -1,10 +1,12 @@
 <template>
   <div class="audio-player">
     <audio
+      id="my-audio"
       ref="audio"
       :src="audioSrc"
       @timeupdate="emitTimeUpdate"
       @ended="emitEnded"
+      @error="handleAudioError"
       controls
     ></audio>
   </div>
@@ -31,20 +33,25 @@ const audio = ref(null)
 
 
 function emitTimeUpdate() {
-  emit('onTimeUpdate', audio.value.currentTime)
+   if (audio.value) emit('onTimeUpdate', audio.value.currentTime)
 }
 
 function emitEnded() {
   emit('onEnded')
 }
 
+function handleAudioError() {
+  // Ignorar errores de src vacío mientras carga la canción
+}
+
 
 watch(() => props.stopAudio, (shouldStop) => {
-  if (!audio.value) return
+  if (!audio.value || !props.audioSrc) return
   if (shouldStop) {
     audio.value.pause()
   } else {
-    audio.value.play()
+    //audio.value.play()
+    audio.value.play().catch(() => {})
   }
 })
 </script>
