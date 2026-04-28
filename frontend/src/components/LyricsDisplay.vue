@@ -18,7 +18,7 @@
           <span v-if="line.answered" class="answered-word">
             {{ line.word }}
           </span>
-
+    
           <!-- Input activo solo si es la línea actual y no respondida -->
           <input
             v-else-if="line.isCurrent"
@@ -28,7 +28,7 @@
             class="word-input"
             :class="{ wrong: inputState === 'wrong' }"
             placeholder="___"
-            @keyup.enter="checkWord(line)"
+            @keyup.enter="checkWord(currentLineIndex)"
             autocomplete="off"
             autocorrect="off"
             autocapitalize="off"
@@ -45,7 +45,7 @@
 
 
     <div v-if="currentLineHasWord" class="skip-wrap">
-      <button class="btn-skip" data-cy="skip" @click="skip">Skip</button>
+      <button class="btn-skip" data-cy="skip" @click="skip(currentLineIndex)">Skip</button>
     </div>
 
     <div v-if="finished" class="summary">
@@ -190,7 +190,8 @@ function updateVisibleLines() {
   visibleLines.value = lines;
 }
 
-function checkWord(line) {
+function checkWord(lineIndex) {
+  const line = lyricsData.value[lineIndex]
   if (!line || !line.word || line.answered) return
 
   const typed = userInput.value.trim().toLowerCase()
@@ -199,6 +200,7 @@ function checkWord(line) {
   if (typed === correctWord) {
     // Acierto
     line.answered = true
+
     correctCount.value++
     userInput.value = ''
     inputState.value = ''
@@ -241,8 +243,8 @@ function checkWord(line) {
   }
 }
 
-function skip() {
-  const line = lyricsData.value[currentLineIndex.value]
+function skip(lineIndex) {
+  const line = lyricsData.value[lineIndex]
   if (!line || !line.word || line.answered) return
 
   line.answered = true
