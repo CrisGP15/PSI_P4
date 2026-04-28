@@ -8,7 +8,6 @@
 
       <div class="audio-section">
         <AudioPlayer
-          v-show="song?.audio_url"
           ref="audioPlayerRef"
           :audio-src="song?.audio_url || ''"
           :stop-audio="stopAudioFlag"
@@ -41,8 +40,7 @@
       <div v-if="showSummary" class="summary-modal">
         <div class="summary-content">
           <h2>¡Canción Completada!</h2>
-          <p>Aciertos: {{ summary.correct }}</p>
-          <p>Fallos: {{ summary.wrong }}</p>
+          <p>Correct answers: {{ summary.correct }} - Wrong answers: {{ summary.wrong }}</p>
           <p>Porcentaje: {{ percentage }}%</p>
           <button @click="goHome">Volver al Inicio</button>
           <button @click="playAgain">Repetir Canción</button>
@@ -207,6 +205,11 @@ function handleTimeUpdate(time) {
 
 // Manejar fin de la canción
 async function handleSongEnded() {
+  // Llamar a handleSongEnded en LyricsDisplay para que emita el resumen
+  if (lyricsDisplayRef.value) {
+    lyricsDisplayRef.value.handleSongEnded();
+  }
+
   // Esperar un momento para que LyricsDisplay procese el resumen
   setTimeout(() => {
     if (!showSummary.value) {

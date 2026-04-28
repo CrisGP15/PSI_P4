@@ -226,9 +226,13 @@ function checkWord(lineIndex) {
         currentLineIndex.value = nextIndex
         updateVisibleLines()
       } else {
-        // Si no hay más palabras, avanzar al final
-        currentLineIndex.value = lyricsData.value.length - 1
-        updateVisibleLines()
+        // Si no hay más palabras, la canción está completa
+        finished.value = true
+        emit("summary", {
+          correct: correctCount.value,
+          wrong: errorCount.value,
+          total: lyricsData.value.filter(l => l.word).length
+        })
       }
     }, 50)
   } else {
@@ -269,6 +273,14 @@ function skip(lineIndex) {
     if (nextIndex !== -1) {
       currentLineIndex.value = nextIndex
       updateVisibleLines()
+    } else {
+      // Si no hay más palabras, la canción está completa
+      finished.value = true
+      emit("summary", {
+        correct: correctCount.value,
+        wrong: errorCount.value,
+        total: lyricsData.value.filter(l => l.word).length
+      })
     }
   }, 50)
 }
@@ -277,7 +289,7 @@ function handleSongEnded() {
   finished.value = true;
   emit("summary", {
     correct: correctCount.value,
-    errors: errorCount.value,
+    wrong: errorCount.value,
     total: lyricsData.value.filter(l => l.word).length
   })
 }
