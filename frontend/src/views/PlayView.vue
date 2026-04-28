@@ -420,7 +420,7 @@ function playAgain() {
 
 .summary-content {
   background: var(--color-text-light);
-  color: var(--color-background-dark);
+  color: #333;
   padding: var(--spacing-xl);
   border-radius: var(--border-radius-lg);
   text-align: center;
