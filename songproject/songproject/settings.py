@@ -34,7 +34,7 @@ DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 #     ]
 
 # Configuración CORS (debe ir ANTES de las apps)
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
@@ -43,8 +43,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
 ]
 
-# para permitir credenciales si es necesario
-CORS_ALLOW_CREDENTIALS = True
+# # para permitir credenciales si es necesario
+# CORS_ALLOW_CREDENTIALS = True
 
 # Para desarrollo local, puedes permitir todos los orígenes temporalmente
 if DEBUG:
