@@ -89,6 +89,8 @@ const router = useRouter()
 
 // URL base de la API — se define en el archivo .env
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'
+console.log('🔍 API_URL:', API_URL)
+
 
 // ── Estado: Top 3 canciones 
 const topSongs = ref([])

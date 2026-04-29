@@ -34,12 +34,13 @@ DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 #     ]
 
 # Configuración CORS (debe ir ANTES de las apps)
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
-    "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",  # ← Frontend en Render
+    "http://127.0.0.1:3000",
+    "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
 ]
 
 # para permitir credenciales si es necesario
@@ -206,14 +207,7 @@ DJOSER = {
         "current_user": "djoser.serializers.UserSerializer",
     },
 }
-# CORS configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
-]
+
 
 # 
 # URLs de la API
