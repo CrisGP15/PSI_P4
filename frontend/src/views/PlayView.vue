@@ -438,7 +438,7 @@ function playAgain() {
 }
 
 .summary-content p {
-  font-size: var(--font-size-md);
+  font-size: 17px;
   margin: var(--spacing-sm) 0;
 }
 
