@@ -24,13 +24,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET KEY desde variable de entorno
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+
+# if DEBUG:
+#     CORS_ALLOW_ALL_ORIGINS = True
+# else:
+#     CORS_ALLOW_ALL_ORIGINS = False
+#     CORS_ALLOWED_ORIGINS = [
+#         "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
+#     ]
+
+# Configuración CORS (debe ir ANTES de las apps)
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",  # ← Frontend en Render
+]
+
+# para permitir credenciales si es necesario
+CORS_ALLOW_CREDENTIALS = True
+
+# Para desarrollo local, puedes permitir todos los orígenes temporalmente
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
-    ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
@@ -62,9 +79,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
