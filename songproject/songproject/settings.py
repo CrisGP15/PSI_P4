@@ -24,7 +24,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET KEY desde variable de entorno
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
+    ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
+]
 
 ALLOWED_HOSTS = (
     os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
