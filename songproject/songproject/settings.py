@@ -25,14 +25,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-# if DEBUG:
-#     CORS_ALLOW_ALL_ORIGINS = True
-# else:
-#     CORS_ALLOW_ALL_ORIGINS = False
-#     CORS_ALLOWED_ORIGINS = [
-#         "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
-#     ]
-
 # Configuración CORS (debe ir ANTES de las apps)
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
@@ -43,8 +35,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
 ]
 
-# # para permitir credenciales si es necesario
-# CORS_ALLOW_CREDENTIALS = True
 
 # Para desarrollo local, puedes permitir todos los orígenes temporalmente
 if DEBUG:
