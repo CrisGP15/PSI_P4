@@ -23,9 +23,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include("djoser.urls")),
-    path(
-        "api/v1/", include("djoser.urls.authtoken")
-    ),  # Para /token/login y /token/logout
+    path("api/v1/", include("djoser.urls.authtoken")),  # Para /token/login y /token/logout
     path("api/v1/", include("api.urls")),  # Incluye URLs de tu API
 ]
 

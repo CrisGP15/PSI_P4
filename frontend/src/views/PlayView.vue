@@ -77,7 +77,7 @@ const summary = ref({ correct: 0, wrong: 0 });
 const songUserSent = ref(false);
 
 // URL de la API
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001"; //-----si da error, a ver si añadir una / al final se soluciona
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001"; 
 
 // Estilo de fondo (si hay imagen)
 const backgroundStyle = computed(() => {
