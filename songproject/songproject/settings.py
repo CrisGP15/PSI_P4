@@ -195,6 +195,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
+    "https://p4-songproject-frontend-06-2312-2026-1.onrender.com",
 ]
 
 # 
