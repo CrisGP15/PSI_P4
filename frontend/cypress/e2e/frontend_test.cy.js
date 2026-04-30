@@ -65,3 +65,5 @@ describe('Use the aplication', () => {
     cy.contains('Correct answers: 2 - Wrong answers: 2', { timeout: 60000 })
   })
 })
+
+// npx cypress run --config baseUrl=https://p4-songproject-frontend-06-2312-2026-1.onrender.com
